@@ -1,0 +1,110 @@
+:root {
+    --p-dark: #4b0082;
+    --p-main: #764ba2;
+    --p-light: #f3e5f5;
+    --white: #ffffff;
+    --gray-bg: #f8f9fa;
+    --grad: linear-gradient(135deg, #764ba2 0%, #a29bfe 100%);
+}
+
+body { font-family: 'Sarabun', sans-serif; background: var(--gray-bg); margin: 0; color: #333; }
+.container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+
+/* Header ม่วง-ขาว */
+.hero { background: var(--white); color: var(--p-main); text-align: center; padding: 40px 20px; border-bottom: 5px solid var(--p-main); margin-bottom: 40px; }
+
+/* Card & Form */
+.card { background: var(--white); padding: 30px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #eee; }
+.form-group { margin-bottom: 15px; }
+label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--p-dark); }
+input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 10px; box-sizing: border-box; }
+
+/* Buttons */
+.btn-primary { background: var(--p-main); color: white; padding: 12px 25px; border-radius: 10px; border: none; cursor: pointer; width: 100%; font-size: 1.1rem; }
+.btn-primary:hover { background: var(--p-dark); }
+
+.btn-secondary {
+    background-color: #f3e5f5; /* ม่วงอ่อนพาสเทล */
+    color: #764ba2;           /* ตัวอักษรม่วงเข้ม */
+    border: 1px solid #d19fe8;
+    padding: 12px 25px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.3s;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-secondary:hover {
+    background-color: #764ba2;
+    color: white;
+    transform: translateY(-3px);
+}
+.back-link { 
+    display: inline-flex; align-items: center; text-decoration: none; 
+    color: var(--p-main); border: 1.5px solid var(--p-main); 
+    padding: 8px 15px; border-radius: 8px; font-weight: bold; margin-bottom: 20px; 
+}
+.back-link:hover { background: var(--p-main); color: white; }
+
+/* Table */
+.table-responsive { background: white; border-radius: 15px; overflow: hidden; border: 1px solid #eee; }
+table { width: 100%; border-collapse: collapse; }
+th { background: var(--p-main); color: white; padding: 15px; text-align: left; }
+td { padding: 15px; border-bottom: 1px solid #f3e5f5; }
+
+/* Badges */
+.status-badge { padding: 5px 12px; border-radius: 50px; font-size: 0.85rem; font-weight: bold; }
+.status-approved { background: #e8f5e9; color: #2e7d32; }
+.status-pending { background: var(--white); color: var(--p-main); border: 1px solid var(--p-main); }
+/* ตกแต่งส่วนวิธีการจองธีมม่วง-ขาว */
+.how-to-book {
+    padding: 40px 0;
+}
+
+.steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.step-item {
+    background: var(--white);
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    border: 1px solid var(--p-light);
+    transition: 0.3s;
+    position: relative;
+}
+
+.step-item:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(118, 75, 162, 0.1);
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    background: var(--p-main);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin: 0 auto 20px;
+}
+
+.step-item h3 {
+    color: var(--p-dark);
+    margin-bottom: 10px;
+}
+
+.step-item p {
+    color: #666;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}

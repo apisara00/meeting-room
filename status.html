@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>สถานะการจอง - รร.วัดป้อมวิเชียรโชติการาม</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <a href="index.html" class="back-link">🏠 กลับหน้าหลัก</a>
+            <h2 style="text-align: center;">ตารางการใช้ห้องประชุมวันนี้</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ห้องประชุม</th>
+                            <th>เวลา</th>
+                            <th>ผู้ขอใช้</th>
+                            <th>สถานะ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script>
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzvF44hFQAqZCtoDgeaCCkp3jx4GIJmRCADqfa54WPZzz5NwSun5kix1pCZn3Jz4A3fow/exec';
+        async function loadStatus() {
+    // ดึงวันที่ปัจจุบันรูปแบบ yyyy-mm-dd (ค.ศ.)
+    const today = new Date().toLocaleDateString('sv-SE'); 
+    
+    const res = await fetch(scriptURL, { 
+        method: 'POST', 
+        body: JSON.stringify({action: 'check', date: today, room: 'all'}) 
+    });
+    const data = await res.json();
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = ""; // ล้างข้อมูลเดิม
+
+    data.forEach(item => {
+        const statusClass = item.status === 'อนุมัติ' ? 'status-approved' : 'status-pending';
+        
+        // ตรวจสอบว่ามีข้อมูลเวลาหรือไม่ หากไม่มีให้ข้ามไป
+        if(!item.start || !item.end) return;
+
+        tbody.innerHTML += `
+            <tr>
+                <td style="font-weight:bold;">${item.room}</td>
+                <td>⏰ ${item.start} - ${item.end} น.</td>
+                <td>${item.name}</td>
+                <td><span class="status-badge ${statusClass}">${item.status}</span></td>
+            </tr>`;
+    });
+}
+loadStatus();
+    </script>
+</body>
+</html>
