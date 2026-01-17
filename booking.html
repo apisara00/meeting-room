@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>จองห้องประชุม - รร.วัดป้อมวิเชียรโชติการาม</title>
     <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
     <div class="container">
@@ -12,41 +13,51 @@
             <h2>แบบฟอร์มจองห้องประชุม</h2>
             <form id="bookingForm">
                 <div class="form-group">
-                    <label>วันที่ต้องการจอง</label>
+                    <label>📅 วันที่ต้องการจอง</label>
                     <input type="date" id="date" name="วันที่จอง" required onchange="checkAvailability()">
                 </div>
                 <div class="form-group">
-                    <label>ชื่อห้องประชุม</label>
+                    <label>🏫 ชื่อห้องประชุม</label>
                     <select id="room" name="ชื่อห้องประชุม" required onchange="checkAvailability()">
-                        <option value=\"\">-- เลือกห้อง --</option>
+                        <option value="">-- เลือกห้อง --</option>
                         <option value="ห้องดาหลา">ห้องดาหลา</option>
                         <option value="ห้องพวงคราม">ห้องพวงคราม</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>เวลาเริ่มจอง</label>
-                    <select id="startTime" name="startTime" required onchange="updateEndTime()">
+                    <label>🕒 เวลาเริ่มจอง</label>
+                    <select id="startTime" name="startTime" required onchange="updateEndTime()" disabled>
                         <option value="">-- เลือกวันที่และห้องก่อน --</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>เวลาสิ้นสุด</label>
-                    <select id="endTime" name="endTime" required>
+                    <label>🕒 เวลาสิ้นสุด</label>
+                    <select id="endTime" name="endTime" required disabled>
                         <option value="">-- เลือกเวลาเริ่มจองก่อน --</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>ชื่อผู้จอง</label>
+                    <label>✍️ ชื่อผู้จอง</label>
                     <input type="text" name="ชื่อผู้จอง" required>
                 </div>
                 <div class="form-group">
-                    <label>เบอร์ติดต่อ</label>
+                    <label>📞 เบอร์ติดต่อ</label>
                     <input type="tel" name="เบอร์ติดต่อ" required>
                 </div>
                 <button type="submit" class="btn-primary" id="submitBtn">ยืนยันการจอง</button>
             </form>
         </div>
     </div>
-    <script src="script.js"></script>
+   <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateInput = document.getElementById('date');
+            if (dateInput) {
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.min = today;
+                dateInput.value = today;
+            }
+        });
+    </script>
 </body>
 </html>

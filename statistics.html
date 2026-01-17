@@ -5,37 +5,22 @@
     <title>สถิติการใช้งาน - รร.วัดป้อมวิเชียรโชติการาม</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
     <div class="container">
         <div class="card">
             <a href="index.html" class="back-link">🏠 กลับหน้าหลัก</a>
-            <h2 style="text-align: center;">อันดับห้องประชุมยอดนิยม</h2>
-            <canvas id="statChart"></canvas>
+            <h2 style="text-align: center; color: var(--p-dark);">📊 อันดับห้องประชุมยอดนิยม</h2>
+            <div style="position: relative; height:400px; width:100%">
+                <canvas id="statChart"></canvas>
+            </div>
         </div>
     </div>
+    <script src="script.js"></script>
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbzvF44hFQAqZCtoDgeaCCkp3jx4GIJmRCADqfa54WPZzz5NwSun5kix1pCZn3Jz4A3fow/exec';
-        async function loadStats() {
-            const res = await fetch(scriptURL, { method: 'POST', body: JSON.stringify({action: 'check', date: 'all', room: 'all'}) });
-            const data = await res.json();
-            const counts = {};
-            data.forEach(item => counts[item.room] = (counts[item.room] || 0) + 1);
-            
-            new Chart(document.getElementById('statChart'), {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(counts),
-                    datasets: [{
-                        label: 'จำนวนครั้งที่จอง',
-                        data: Object.values(counts),
-                        backgroundColor: '#764ba2',
-                        borderRadius: 10
-                    }]
-                }
-            });
-        }
-        loadStats();
+        // เรียกใช้ฟังก์ชันวาดกราฟเมื่อโหลดหน้า
+        window.addEventListener('load', renderStatistics);
     </script>
 </body>
 </html>
