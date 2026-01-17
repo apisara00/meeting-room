@@ -99,25 +99,35 @@ tr:hover {
     background-color: #f3e5f5;
 }
 /* สถานะการจอง */
+/* ป้ายสถานะทั่วไป */
 .status-badge {
     padding: 5px 12px;
-    border-radius: 15px;
+    border-radius: 20px;
     font-size: 0.85rem;
     font-weight: bold;
     display: inline-block;
 }
 
-.status-approved { 
-    background-color: #d4edda; 
-    color: #155724; 
-    border: 1px solid #c3e6cb; 
-} /* สีเขียว */
+/* ✅ สีเขียว: สำหรับสถานะ "อนุมัติ" */
+.status-approved {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
 
-.status-pending { 
-    background-color: #fff3cd; 
-    color: #856404; 
-    border: 1px solid #ffeeba; 
-} /* สีเหลือง */
+/* ⏳ สีเหลือง: สำหรับสถานะ "รออนุมัติ" */
+.status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+/* ❌ สีแดง: สำหรับสถานะ "ไม่อนุมัติ" หรือ "ยกเลิก" */
+.status-cancelled {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
 /* การจัดเลย์เอาท์หน้าแรกให้น่าเชื่อถือ */
 .how-to-book { padding: 50px 0; background: #fff; border-radius: 30px; margin-top: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.03); }
 .section-title { text-align: center; color: var(--p-dark); margin-bottom: 40px; font-weight: 700; }

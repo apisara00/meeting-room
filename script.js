@@ -1,5 +1,5 @@
-// 1. ตั้งค่า URL ให้ตรงกับที่ Deploy จาก Google Apps Script (ต้องเลือก Anyone เท่านั้น)
-const scriptURL = 'https://script.google.com/macros/s/AKfycbzrC7T3nEr21nYGIp6fOTu6gtz6bVB-rUlS90UUtG41mnbpPUaFl9B7vJGUcMQUId78-Q/exec';
+// 1. ใส่ URL ที่ได้จาก Google Apps Script (ต้องเลือก Anyone)
+const scriptURL = 'https://script.google.com/macros/s/AKfycbynKB8P1xvAn1G3YToFI_PSg-7LvbZMgm6o7cukFeTRQ7XTmkwWDuGhB59Zeb39Q3huog/exec';
 
 const timeSlots = ["08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30"];
 
@@ -21,22 +21,28 @@ async function checkAvailability() {
     startSelect.innerHTML = '<option>🔄 กำลังตรวจสอบเวลาว่าง...</option>';
 
     try {
-        const response = await fetch(scriptURL, { 
-            method: 'POST', 
-            body: JSON.stringify({ action: 'check', date: dateEl.value, room: roomEl.value }) 
-        });
-        const booked = await response.json();
+        const response = await fetch(scriptURL + "?action=read");
+        const data = await response.json();
+        
+        const [y, m, d] = dateEl.value.split('-');
+        const targetDate = `${d}/${m}/${y}`;
+        const targetRoom = roomEl.value;
+
+        const booked = data.filter(row => row.date === targetDate && row.room === targetRoom);
 
         startSelect.innerHTML = '<option value="">-- เลือกเวลาเริ่มจอง --</option>';
         timeSlots.forEach(slot => {
-            const isBooked = booked.some(b => slot >= b.start && slot < b.end);
-            if (!isBooked) {
-                startSelect.innerHTML += `<option value="${slot}">${slot} น.</option>`;
-            }
+            const isBooked = booked.some(b => {
+                const s = String(b.startTime).substring(0, 5);
+                const e = String(b.endTime).substring(0, 5);
+                return slot >= s && slot < e;
+            });
+            if (!isBooked) startSelect.innerHTML += `<option value="${slot}">${slot} น.</option>`;
         });
         startSelect.disabled = false;
+        if(startSelect.options.length <= 1) startSelect.innerHTML = '<option value="">❌ เต็มทุกช่วงเวลา</option>';
     } catch (e) {
-        startSelect.innerHTML = '<option>❌ ไม่สามารถโหลดข้อมูลได้</option>';
+        startSelect.innerHTML = '<option>❌ เกิดข้อผิดพลาด (โปรดเช็คการ Deploy)</option>';
     }
 }
 
@@ -54,70 +60,53 @@ function updateEndTime() {
     endSelect.disabled = false;
 }
 
-const bookingForm = document.getElementById('bookingForm');
-if (bookingForm) {
-    bookingForm.onsubmit = async function(e) {
-        e.preventDefault();
-        const btn = document.getElementById('submitBtn');
-        btn.disabled = true;
-        btn.innerText = '⌛ กำลังส่งข้อมูล...';
-        const formData = new FormData(this);
-        const data = Object.fromEntries(formData.entries());
-        try {
-            await fetch(scriptURL, { method: 'POST', body: JSON.stringify({ action: 'save', ...data }) });
-            alert('✅ บันทึกการจองเรียบร้อยแล้ว!');
-            window.location.href = 'status.html';
-        } catch (e) {
-            alert('❌ เกิดข้อผิดพลาดในการบันทึก');
-            btn.disabled = false;
-        }
-    };
-}
-
-// --- ฟังก์ชันสำหรับหน้าสถานะ (status.html) ---
-// แก้ไข ReferenceError และ Logic วันที่เรียบร้อยแล้ว
+// --- ฟังก์ชันหน้าสถานะ (3 สี: เขียว เหลือง แดง) ---
 
 async function loadStatusTable() {
     const todayBody = document.getElementById('todayTableBody');
     const futureBody = document.getElementById('futureTableBody');
-    if (!todayBody || !futureBody) return;
+    if (!todayBody) return;
 
     try {
-        todayBody.innerHTML = '<tr><td colspan="4">⏳ กำลังโหลดข้อมูล...</td></tr>';
         const res = await fetch(scriptURL + "?action=read");
         const data = await res.json();
         
-        // กำหนดวันที่วันนี้เป็น ค.ศ. (DD/MM/YYYY) เพื่อให้ตรงกับฐานข้อมูล
+        // สร้างวันที่ปัจจุบันในรูปแบบ dd/mm/yyyy
         const now = new Date();
-        const d = String(now.getDate()).padStart(2, '0');
-        const m = String(now.getMonth() + 1).padStart(2, '0');
-        const y = now.getFullYear(); 
-        const todayStr = `${d}/${m}/${y}`; // จะได้ "17/01/2026"
+        const todayStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
 
         todayBody.innerHTML = '';
-        futureBody.innerHTML = '';
+        if(futureBody) futureBody.innerHTML = '';
 
         data.forEach(row => {
-            const formatTime = (t) => String(t).includes("T") ? t.split("T")[1].substring(0, 5) : String(t).substring(0, 5);
-            const tr = document.createElement('tr'); // สร้างแถวก่อนนำข้อมูลใส่
-            const content = `<td>🏢 ${row.room}</td><td>🕒 ${formatTime(row.startTime)} - ${formatTime(row.endTime)}</td><td>👤 ${row.user}</td>`;
+            let statusClass = "status-pending"; 
+            let statusText = row.status || "รออนุมัติ";
+            if (statusText === "อนุมัติ" || statusText === "อนุมัติแล้ว") statusClass = "status-approved";
+            else if (statusText === "ไม่อนุมัติ" || statusText === "ยกเลิก") statusClass = "status-cancelled";
 
+            const rowHTML = `
+                <td>${row.room}</td>
+                <td>⏰ ${row.startTime} - ${row.endTime}</td>
+                <td>${row.user}</td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+            `;
+
+            const tr = document.createElement('tr');
             if (row.date === todayStr) {
-                const statusClass = row.status === "อนุมัติ" ? "status-approved" : "status-pending";
-                tr.innerHTML = content + `<td><span class="status-badge ${statusClass}">${row.status || 'รอดำเนินการ'}</span></td>`;
+                tr.innerHTML = rowHTML;
                 todayBody.appendChild(tr);
-            } else {
-                tr.innerHTML = `<td>📅 ${row.date}</td>` + content;
+            } else if(futureBody) {
+                tr.innerHTML = `<td>${row.date}</td>` + rowHTML;
                 futureBody.appendChild(tr);
             }
         });
 
-        if (todayBody.innerHTML === '') todayBody.innerHTML = '<tr><td colspan="4">ไม่มีรายการใช้งานวันนี้</td></tr>';
-    } catch (e) { console.error(e); }
+        if (todayBody.innerHTML === '') todayBody.innerHTML = '<tr><td colspan="4">ไม่มีรายการจองวันนี้</td></tr>';
+
+    } catch (e) { console.error("Error loading table:", e); }
 }
 
-// --- ฟังก์ชันสำหรับหน้าสถิติ (statistics.html) ---
-// แก้ไข ReferenceError: renderStatistics is not defined
+// --- ฟังก์ชันหน้าสถิติ (โชว์ทุกรายการ) ---
 
 async function renderStatistics() {
     const canvas = document.getElementById('statChart');
@@ -134,20 +123,50 @@ async function renderStatistics() {
             data: {
                 labels: Object.keys(stats),
                 datasets: [{
-                    label: 'จำนวนครั้งที่จอง (ครั้ง)',
-                    data: Object.values(stats),
-                    backgroundColor: 'rgba(75, 0, 130, 0.7)',
-                    borderColor: '#4b0082',
-                    borderWidth: 1.5
+                    label: 'สถิติการใช้งานรวม (ครั้ง)',
+                data: Object.values(stats),
+                backgroundColor: '#6a1b9a', // สีม่วงขวาตามธีม
+                borderColor: '#ffc107',
+                borderWidth: 2
                 }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
+            }
         });
     } catch (e) { console.error(e); }
 }
+const bookingForm = document.getElementById('bookingForm');
+if (bookingForm) {
+    bookingForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerText = '⌛ กำลังส่งข้อมูล...';
 
-// รันฟังก์ชันเมื่อโหลดหน้าเว็บ
+        const formData = new FormData(bookingForm);
+        const queryString = new URLSearchParams(formData).toString();
+        const finalURL = `${scriptURL}?action=insert&${queryString}`;
+
+        try {
+            const response = await fetch(finalURL, { method: 'GET' });
+            const result = await response.json();
+            if (result.result === 'success') {
+                alert('✅ จองห้องประชุมสำเร็จ!');
+                window.location.href = 'status.html';
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            alert('❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'ยืนยันการจอง';
+        }
+    });
+}
+
+// ผูกฟังก์ชันเข้ากับหน้าต่างเพื่อให้ HTML เรียกหาเจอ
+window.checkAvailability = checkAvailability;
+window.updateEndTime = updateEndTime;
+
 window.onload = function() {
-    loadStatusTable();
-    renderStatistics();
+    if(document.getElementById('todayTableBody')) loadStatusTable();
+    if(document.getElementById('statChart')) renderStatistics();
 };
