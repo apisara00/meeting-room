@@ -1,5 +1,5 @@
 // 1. ใส่ URL ที่ได้จาก Google Apps Script (ต้องเลือก Anyone)
-const scriptURL = 'https://script.google.com/macros/s/AKfycbynKB8P1xvAn1G3YToFI_PSg-7LvbZMgm6o7cukFeTRQ7XTmkwWDuGhB59Zeb39Q3huog/exec';
+const scriptURL = 'https://script.google.com/macros/s/AKfycbzOvo-NyWEJaGHsLXFlJ6W5u7TKAeOxN21O2AsBOz8j2gqZf8s4fqdhHbFEBtYkNoAh/exec';
 
 const timeSlots = ["08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30"];
 
@@ -71,41 +71,50 @@ async function loadStatusTable() {
         const res = await fetch(scriptURL + "?action=read");
         const data = await res.json();
         
-        // สร้างวันที่ปัจจุบันในรูปแบบ dd/mm/yyyy
         const now = new Date();
-        const todayStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+        const d = String(now.getDate()).padStart(2, '0');
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const y = now.getFullYear();
+        const todayStr = `${d}/${m}/${y}`; // รูปแบบ dd/mm/yyyy ให้ตรงกับใน Sheet
 
         todayBody.innerHTML = '';
         if(futureBody) futureBody.innerHTML = '';
 
         data.forEach(row => {
-            let statusClass = "status-pending"; 
-            let statusText = row.status || "รออนุมัติ";
-            if (statusText === "อนุมัติ" || statusText === "อนุมัติแล้ว") statusClass = "status-approved";
-            else if (statusText === "ไม่อนุมัติ" || statusText === "ยกเลิก") statusClass = "status-cancelled";
-
-            const rowHTML = `
-                <td>${row.room}</td>
-                <td>⏰ ${row.startTime} - ${row.endTime}</td>
-                <td>${row.user}</td>
-                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-            `;
+            // กรองแถวว่าง
+            if (!row.date || !row.room) return;
 
             const tr = document.createElement('tr');
+            
             if (row.date === todayStr) {
-                tr.innerHTML = rowHTML;
+                // --- ตารางวันนี้ (แสดงสถานะ) ---
+                let statusClass = row.status === "อนุมัติ" ? "status-approved" : (row.status === "ยกเลิก" ? "status-cancelled" : "status-pending");
+                tr.innerHTML = `
+                    <td>${row.room}</td>
+                    <td>⏰ ${row.startTime} - ${row.endTime}</td>
+                    <td>${row.user}</td>
+                    <td><span class="status-badge ${statusClass}">${row.status || 'รออนุมัติ'}</span></td>
+                `;
                 todayBody.appendChild(tr);
-            } else if(futureBody) {
-                tr.innerHTML = `<td>${row.date}</td>` + rowHTML;
-                futureBody.appendChild(tr);
+            } else {
+                // --- ตารางจองล่วงหน้า (ไม่แสดงสถานะ) ---
+                if(futureBody) {
+                    tr.innerHTML = `
+                        <td>${row.date}</td>
+                        <td>${row.room}</td>
+                        <td>⏰ ${row.startTime} - ${row.endTime}</td>
+                        <td>${row.user}</td>
+                    `;
+                    futureBody.appendChild(tr);
+                }
             }
         });
 
         if (todayBody.innerHTML === '') todayBody.innerHTML = '<tr><td colspan="4">ไม่มีรายการจองวันนี้</td></tr>';
+        if (futureBody && futureBody.innerHTML === '') futureBody.innerHTML = '<tr><td colspan="4">ไม่มีรายการจองล่วงหน้า</td></tr>';
 
-    } catch (e) { console.error("Error loading table:", e); }
+    } catch (e) { console.error("Error:", e); }
 }
-
 // --- ฟังก์ชันหน้าสถิติ (โชว์ทุกรายการ) ---
 
 async function renderStatistics() {
@@ -139,7 +148,7 @@ if (bookingForm) {
         e.preventDefault();
         const submitBtn = document.getElementById('submitBtn');
         submitBtn.disabled = true;
-        submitBtn.innerText = '⌛ กำลังส่งข้อมูล...';
+        submitBtn.innerText = '⌛ กำลังตรวจสอบการจองซ้ำ...';
 
         const formData = new FormData(bookingForm);
         const queryString = new URLSearchParams(formData).toString();
@@ -148,20 +157,23 @@ if (bookingForm) {
         try {
             const response = await fetch(finalURL, { method: 'GET' });
             const result = await response.json();
+            
             if (result.result === 'success') {
                 alert('✅ จองห้องประชุมสำเร็จ!');
                 window.location.href = 'status.html';
             } else {
-                throw new Error(result.message);
+                // แก้จุดนี้: แสดงข้อความ Error ที่ส่งมาจาก Google Apps Script ตรงๆ
+                alert(result.message); 
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'ยืนยันการจอง';
             }
         } catch (error) {
-            alert('❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+            alert('❌ เกิดข้อผิดพลาดทางเทคนิค โปรดลองใหม่อีกครั้ง');
             submitBtn.disabled = false;
             submitBtn.innerText = 'ยืนยันการจอง';
         }
     });
 }
-
 // ผูกฟังก์ชันเข้ากับหน้าต่างเพื่อให้ HTML เรียกหาเจอ
 window.checkAvailability = checkAvailability;
 window.updateEndTime = updateEndTime;
